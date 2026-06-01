@@ -7,6 +7,11 @@ A empresa opera 100% em **Google Workspace** (Gmail, Docs, Sheets, Drive, Meet, 
 
 O objetivo é criar **Google GEMs** — agentes Gemini personalizados — para múltiplos departamentos, democratizando o uso de IA internamente.
 
+**Repositório GitHub:** https://github.com/Nankov-ai/Agente-gestao-horarios
+- Branch principal: `main`
+- Directório local: `c:\projetos\GEM`
+- Inclui: prompt activo, Apps Script, documentação, versões arquivadas (Python, Gemini)
+
 ---
 
 ## O que é um Google GEM
