@@ -176,7 +176,7 @@ Locate the identified previous month section in the CSV (starting at its `=== ` 
 1. **Initial C** — consecutive working day counter at month end → starting value of C on day 1 of new month
 2. **Last shift worked** — shift code and end time → needed for 11h rest validation on day 1
 3. **Guaranteed weekend used?** — whether the full Sáb+Dom was already used in the previous month
-4. **Off-days in transition week** — if the previous month ended mid-week, count FOD/COD already taken in that partial week. Off-days still owed in the first partial week = 2 − off-days already taken.
+4. **Off-days in transition week** — if the previous month ended mid-week, count ALL rest days already taken in that partial week: FOD + FOD-WEEKEND + FOD-FIXED + COD + AJD + BMD + FECHO. Off-days still owed in the first partial week of the new month = 2 − rest_days_already_taken.
 
 Output carryover table and wait for confirmation.
 
@@ -339,13 +339,28 @@ If it is impossible to assign 2 non-overlapping FOD days for both employees in a
 
 **Then — assign rotating FOD days:**
 
-For each employee, for each calendar week, place exactly 2 FOD days in blank cells. For mutual-backup pairs, use the joint assignment from Lock 9.
+For each employee, for each calendar week, execute in this exact order:
 
-**FOD placement — equity distribution (mandatory):**
+**STEP 0 — Calculate rotating_quota (mandatory before any placement):**
+```
+1. Does this employee have FOD-WEEKEND (Sáb+Dom) in this week?
+   → YES: rotating_quota = 0. The 2 FODs are already placed. SKIP to next week.
+   → NO: continue.
+2. Count FOD-FIXED cells this employee has in this week → N_fixed
+3. rotating_quota = 2 − N_fixed
+   → rotating_quota = 2: place 2 rotating FODs
+   → rotating_quota = 1: place 1 rotating FOD
+   → rotating_quota = 0: quota satisfied by FOD-FIXED. SKIP to next week.
+4. If week contains FED days: apply FED-WEEK REST DAY RULE (PART 4.2)
+   — further reduce rotating_quota if available slots < rotating_quota
+```
+Report any quota reduction: `"Colaborador [Nome], semana [X–Y]: [N_fixed] FOD-FIXED + [rotating_quota] FOD rotativo = 2 FOD totais."`
 
-Valid days for rotating FOD: Seg, Ter, Qua, Qui, Sex — in that order of preference, but subject to the equity rule below.
+**STEP 1 — Identify valid slots** (only applies when rotating_quota > 0):
+Valid days for rotating FOD: Seg, Ter, Qua, Qui, Sex — never Sáb or Dom (Lock 7).
+Remove from candidates: F-LOCK, F-LOCK-HOLE, FOD-FIXED, Suplência F-LOCK, WORK-ONLY, NO-FOD, BLOCKED-FOR-B, FED.
 
-**Equity rule (apply before each FOD placement):**
+**STEP 2 — Equity rule (apply before each FOD placement):**
 1. Count the total number of FODs already placed on each valid day across ALL employees for that week.
 2. Place the FOD on the valid day with the **fewest existing FODs** that week — this balances coverage across the week.
 3. If two days are tied, prefer the earlier one in the week (Seg > Ter > Qua > Qui > Sex).
@@ -354,13 +369,12 @@ Valid days for rotating FOD: Seg, Ter, Qua, Qui, Sex — in that order of prefer
 
 **Maximum FODs per day per week:** No single weekday should have more than ⌈total_weekly_FODs / valid_days_available⌉ FODs across all employees. If placing a FOD on a given day would exceed this ceiling, move to the next least-loaded day.
 
-For the guaranteed weekend week: FOD-WEEKEND already placed on Sáb+Dom. No additional rotating FOD in that same week.
-
-Weeks containing FED days: apply the FED-WEEK REST DAY RULE (PART 4.2) — available non-FED, non-F-LOCK, non-F-LOCK-HOLE, non-WORK-ONLY, non-NO-FOD slots only.
-
 Before placing any FOD on a given day, verify all of the following:
 - Cell is not F-LOCK, F-LOCK-HOLE, FOD-FIXED, Suplência F-LOCK, WORK-ONLY, or NO-FOD.
-- Working coverage will not drop below the daily minimum after this FOD.
+- Working coverage will not drop below the **day-type minimum** after this FOD:
+  - Seg–Qui: use the general daily minimum (from STEP 3.3).
+  - Sex: use the Sex ⭐ minimum if specified separately in "Equipa e regras"; if not specified, use the general minimum. Sex is a high-volume day — apply the stricter value.
+  - Sáb/Dom: enforced by Lock 7 (WORK-ONLY) — rotating FOD is never placed here regardless of coverage.
 - This FOD on day D does NOT create a forbidden pair. Check explicitly:
   - Is D−1 already marked FOD, FOD-WEEKEND, FOD-FIXED, AJD, COD, or BMD? → consecutive rest → move to next priority day.
   - Is D+1 already marked with any rest code (same list)? → consecutive rest → move to next priority day.
@@ -421,11 +435,19 @@ Also compute per day:
 - **Working PN technicians** = PN employees scheduled to work that day
 
 **General coverage check:**
-Compare working coverage against the daily minimum (from STEP 3.3).
-Flag ⚠️ any day below minimum. For each ⚠️ day:
-- Identify an employee with a rotating FOD on that day whose FOD can move to an adjacent day with surplus coverage.
-- Move the FOD. Re-run VERIFY A after each move.
-- If no valid move exists: `"AVISO: Cobertura mínima não atingível no dia [X] sem violar outras regras. Aguardo instrução."`.
+Compare N_working against the day-type minimum for each day:
+- Seg–Qui: general daily minimum (from STEP 3.3)
+- Sex: Sex ⭐ minimum if specified; otherwise general minimum
+- Sáb/Dom: ⭐ weekend minimum (handled in the dedicated weekend check below)
+
+Any day below its minimum = ❌. For each ❌ day:
+1. Identify an employee with a rotating FOD on that day whose FOD can move to a day with surplus coverage.
+2. The destination day must pass all forbidden pair and coverage checks.
+3. Move the FOD. Re-run VERIFY A, then re-run the coverage check.
+4. If no valid move exists: **BLOQUEIO** — do NOT present the skeleton or proceed to STEP 3.7E.
+   → `"BLOQUEIO: Cobertura insuficiente no dia [X] ([N_working] < mínimo [M]). Impossível redistribuir FOD sem violar outras restrições. Aguardo instrução."`
+
+Do NOT treat this as a warning. A coverage ❌ at skeleton stage = mandatory stop.
 
 **⭐ Weekend coverage check — mandatory separate gate:**
 For every Sáb and Dom, apply the ⭐ coverage floor (extracted from "Equipa e regras" in STEP 3.3; if no specific weekend floor is stated, use the general daily minimum).
@@ -572,7 +594,12 @@ The ONLY permitted consecutive rest block is the guaranteed Sáb+Dom weekend (FO
 | Any rotating FOD + FOD-WEEKEND (Sáb+Dom) | Creates 3-day block (Sex+Sáb+Dom or Sáb+Dom+Seg) |
 | 3 or more consecutive rest days | Absolute ban, any days, any combination |
 
-**FOD-FIXED quota note:** If an employee's FOD-FIXED days already total ≥ 2 rest days in a given calendar week, no rotating FOD is needed for that week — the weekly quota is already satisfied. Do NOT force rotating FOD placement that would create forbidden adjacent pairs. Report: `"Colaborador [Nome], semana [X–Y]: quota satisfeita por FOD-FIXED — sem FOD rotativo atribuído."`
+**FOD-FIXED quota note:** FOD-FIXED days count toward the 2-FOD weekly quota. Adjust rotating FOD accordingly:
+- FOD-FIXED = 1 → place 1 rotating FOD (total = 2) ✅
+- FOD-FIXED ≥ 2 → place 0 rotating FODs (total = 2) ✅
+- FOD-FIXED = 0 → place 2 rotating FODs (total = 2) ✅
+
+Never place rotating FODs that would bring the weekly total above 2. Report when FOD-FIXED reduces the rotating quota: `"Colaborador [Nome], semana [X–Y]: [N] FOD-FIXED + [2−N] FOD rotativo = 2 FOD totais."`
 
 ---
 
@@ -625,9 +652,18 @@ If the last 4 or 5 days of the month are working shifts, output:
 
 Run in parallel with the consecutive-day counter.
 
+**The weekly FOD quota is always exactly 2 for every employee, every week.** This is absolute — no employee ever receives more or fewer than 2 rest days in a full calendar week. FOD type does not matter: FOD-WEEKEND, FOD-FIXED, and rotating FOD all count equally toward this quota.
+
 For each full calendar week (Mon–Sun), count ALL rest entries: `FOD + FOD-WEEKEND + FOD-FIXED + COD + AJD + BMD + FECHO`:
 - count < 2 → FAIL (unless a valid exception applies — see below)
-- count > 2 → FAIL
+- count > 2 → **BLOQUEIO** — always a violation, no exceptions. Remove the rotating FOD with lowest placement priority from the violating week and re-run VERIFY A. If no rotating FOD can be removed (all are locks): `"BLOQUEIO: Colaborador [Nome] tem [N] dias de descanso na semana [X–Y] — impossível reduzir para 2 sem violar locks. Aguardo instrução."`
+
+**FOD-FIXED and the quota:** FOD-FIXED days count toward the 2-FOD weekly quota. The rotating FOD placement must be adjusted accordingly:
+- FOD-FIXED = 0 in a week → place 2 rotating FODs
+- FOD-FIXED = 1 in a week → place 1 rotating FOD
+- FOD-FIXED ≥ 2 in a week → place 0 rotating FODs (quota already satisfied)
+
+**FOD-WEEKEND and the quota:** The guaranteed weekend (Sáb+Dom) fills the full 2-FOD quota for that week. Zero rotating FODs are placed in the guaranteed weekend week. A rotating FOD placed in addition to FOD-WEEKEND = count of 3 = immediate FAIL.
 
 **Valid quota-reduction exceptions (count < 2 is acceptable when):**
 - **FED-WEEK exception:** week contains FED days — apply FED-WEEK REST DAY RULE (section 4.2).
@@ -749,10 +785,11 @@ Evaluation rules:
 - Rotating FOD adjacent to FOD-FIXED (any day) → ❌ FAIL
 
 **On ❌ FAIL:**
-1. Identify the lower-priority FOD in the pair (per placement priority, PART 4.2).
-2. Move it to the nearest valid non-consecutive slot — the destination cell must NOT be: Sáb/Dom, WORK-ONLY, NO-FOD, F-LOCK, F-LOCK-HOLE, FOD-FIXED, or a Suplência F-LOCK cell. Must not create a new forbidden pair.
-3. Re-run STEPS A–E after each correction.
-4. If no valid slot: reduce FOD quota to 1 and report: `"Colaborador [X], semana [Y–Z]: par FOD inválido. Quota semanal reduzida a 1 — sem posição válida disponível."`.
+1. Identify the lower-priority FOD in the pair (the one placed later per equity order, or the rotating FOD when paired with FOD-FIXED/FOD-WEEKEND).
+2. **Remove** that FOD from its current cell (revert to blank —).
+3. Find the nearest valid non-consecutive slot for it — the destination must NOT be: Sáb/Dom, WORK-ONLY, NO-FOD, F-LOCK, F-LOCK-HOLE, FOD-FIXED, or Suplência F-LOCK. Must not create a new forbidden pair. Must not reduce coverage below the day-type minimum.
+4. Place the FOD in the new slot. Re-run STEPS A–E after each correction.
+5. If no valid destination slot exists: remove the FOD entirely (do not place it anywhere) and report: `"Colaborador [X], semana [Y–Z]: par FOD inválido. FOD removido — sem posição válida disponível. Quota semanal reduzida a 1."`
 
 ---
 
@@ -822,7 +859,16 @@ Apply corrections and re-run if the corrected shift affects other constraints.
 
 ### FINAL GATE
 
-Only after STEPS A–H all show 0 errors: output the final TSV schedule.
+Before outputting any TSV, perform a mandatory final coverage re-check:
+
+For every calendar day, recompute N_working and N_absent using the 3-step direct enumeration formula (PART 0 Coverage Counting Rule). Compare N_working to the day-type minimum (general for Seg–Qui, ⭐ for Sex/Sáb/Dom).
+
+If ANY day shows coverage below its minimum:
+→ **BLOQUEIO** — do NOT output the TSV.
+→ `"BLOQUEIO FINAL: Cobertura insuficiente no(s) dia(s) [lista]. O horário não pode ser publicado. Aguardo instrução."`
+→ The schedule is NOT complete. Wait for user decision before proceeding.
+
+Only after all days pass the coverage check AND STEPS A–H all show 0 errors: output the final TSV schedule.
 
 ---
 
@@ -850,7 +896,8 @@ An employee counts as **not working** if their cell contains any of: `FOD`, `FOD
 N_working + N_absent must equal total headcount (N from STEP 3.2). If they do not match: stop, recount both columns, identify the discrepancy, and fix before publishing the row. Do NOT publish a coverage number that fails this identity check.
 
 **Coverage status per day:**
-- Seg–Sex: compare N_working to the general daily minimum (STEP 3.3) → ✅ if ≥ minimum | ⚠️ if = minimum − 1 | ❌ if < minimum − 1
+- Seg–Qui: compare N_working to the general daily minimum (STEP 3.3) → ✅ if ≥ minimum | ⚠️ if = minimum − 1 | ❌ if < minimum − 1
+- **Sex: compare N_working to the ⭐ Sex minimum if specified in "Equipa e regras"; otherwise use the general minimum** — Sex is a high-volume day, apply the stricter value
 - **Sáb and Dom: compare N_working to the ⭐ weekend minimum (STEP 3.3)** — use the weekend-specific floor, NOT the general minimum
 
 Report format on "Resumo de Cobertura Diária" row: `[N_working] [✅/⚠️/❌]`

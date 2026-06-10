@@ -239,7 +239,11 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 
 ### Alfragide (prioridade imediata)
 1. Testar com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
-2. Validar que as violações identificadas (pares consecutivos Seg+Ter; Patrício Dom+Seg+Ter; cobertura errada) foram eliminadas
+2. Validar que as violações identificadas foram eliminadas:
+   - Pares FOD consecutivos (Seg+Ter, etc.)
+   - 3 FODs na mesma semana (fim de semana garantido + FOD rotativo)
+   - Cobertura ❌ em Sextas-feiras e Terças-feiras
+   - BLOQUEIO ignorado (publicação com dias ❌)
 3. Iterar com feedback da equipa da oficina até aprovação
 
 ### GEMs Departamentais
@@ -280,6 +284,23 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 22 | P4 — PART 6 STEP E: Output obrigatório da sequência de descanso por colaborador (não pode declarar "passado" sem mostrar) |
 | 23 | P5 — PART 0: Coverage Counting Rule elevada a Golden Rule — contagem directa obrigatória em todo o prompt |
 | 24 | STEP 3.5.2: Column mapping com exact match obrigatório — "João Costa" não pode fazer substring match em "João Costa Silva"; ID como tiebreaker quando nome é ambíguo |
+| 25 | F1 — STEP 3.7B FOD placement: verificação de cobertura usa mínimo por tipo de dia (Seg–Qui = geral; Sex = mínimo ⭐ Sex; Sáb/Dom = Lock 7) |
+| 26 | F2+F3 — STEP 3.7D VERIFY B: cobertura ❌ no esqueleto = BLOQUEIO imediato (não AVISO); não avança para STEP 3.7E sem resolver |
+| 27 | F3 — PART 6 FINAL GATE: re-verificação obrigatória de cobertura antes do TSV; BLOQUEIO FINAL se qualquer dia ❌ |
+| 28 | F4 — STEP 3.7B semana garantida: quota dos 2 FODs completamente satisfeita por FOD-WEEKEND Sáb+Dom — zero FODs rotativos adicionais nessa semana |
+| 29 | F5 — PART 4.5: regra "exactamente 2 FODs/semana, sempre" declarada como absoluta; FOD-FIXED conta para a quota; FOD-WEEKEND satisfaz quota completa da sua semana |
+| 30 | F5 — PART 4.2: nota FOD-FIXED reescrita com tabela explícita (FOD-FIXED=0→2 rot; FOD-FIXED=1→1 rot; FOD-FIXED≥2→0 rot; total sempre=2) |
 
 ### Por implementar
 Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
+
+---
+
+## Cadeia de Pensamento — Referência
+
+A cadeia de pensamento completa (sequência exacta de raciocínio do GEM, do ficheiro CSV ao TSV final) foi documentada em sessão de 2026-06-10. Inclui:
+- 7 fases: verificação do ficheiro → leitura → esqueleto → stagger+FODs → VERIFY A/B → geração → auditoria → output
+- Todos os pontos de decisão com condição e acção (BLOQUEIO / continuar / reportar)
+- Tabela de resumo dos 14 pontos críticos de BLOQUEIO
+
+Serve como referência para validar que o prompt cobre todos os cenários e para diagnosticar falhas em horários futuros.
