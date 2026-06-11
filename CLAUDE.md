@@ -290,6 +290,11 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 28 | F4 — STEP 3.7B semana garantida: quota dos 2 FODs completamente satisfeita por FOD-WEEKEND Sáb+Dom — zero FODs rotativos adicionais nessa semana |
 | 29 | F5 — PART 4.5: regra "exactamente 2 FODs/semana, sempre" declarada como absoluta; FOD-FIXED conta para a quota; FOD-WEEKEND satisfaz quota completa da sua semana |
 | 30 | F5 — PART 4.2: nota FOD-FIXED reescrita com tabela explícita (FOD-FIXED=0→2 rot; FOD-FIXED=1→1 rot; FOD-FIXED≥2→0 rot; total sempre=2) |
+| 31 | G1 — PART 7: cobertura por tipo de dia separada — Seg–Qui usa mínimo geral; Sex usa mínimo ⭐ Sex se especificado |
+| 32 | G2 — STEP 3.4: transição de semana conta todos os tipos de descanso (FOD + FOD-WEEKEND + FOD-FIXED + COD + AJD + BMD + FECHO) |
+| 33 | G3 — STEP 3.7B FOD placement: reestruturado com STEP 0 de cálculo de rotating_quota (verifica FOD-WEEKEND → conta FOD-FIXED → aplica FED-WEEK → determina quota antes de qualquer placement) |
+| 34 | G4 — PART 4.5: count > 2 = BLOQUEIO com acção definida — remove FOD de menor prioridade e re-verifica; impossível reduzir → BLOQUEIO explícito |
+| 35 | G5 — PART 6 STEP E: correcção de par inválido reescrita — remove o FOD da célula actual, recoloca num slot válido; só reduz quota se nenhum destino disponível |
 
 ### Por implementar
 Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
