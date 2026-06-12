@@ -114,7 +114,7 @@ Locate and read each section in the combined CSV by its `=== SECTION NAME ===` h
 | Section header | What to extract |
 |---|---|
 | `=== Equipa e regras ===` | Headcount · Permitted shift codes per employee · Specialty (ML / PN / Eletricidade / Todas) · Senior Tech marker · "Other info" rules (fixed shifts, fixed off-days, contractual guarantees, suplência/backup assignments) · Minimum daily headcount (general, ML, PN) |
-| `=== Códigos ===` | Full legend of all shift codes + **start and end time for each code** (e.g., `A03: 08:00–17:00`, `B01: 09:00–18:00`, `B09: 13:00–22:00`) — required for 11h rest validation in STEP 4 |
+| `=== Códigos ===` | Full legend of all shift codes + **start and end time for each code** (e.g., `A03: 08:00–17:00`, `B01: 09:00–18:00`, `B09: 13:00–22:00`) — required for 11h rest validation in STEP 4. After reading all codes, classify each as **abertura** or **fecho** (see STEP 3.1.1 below). |
 | `=== Horários ===` | Output grid template — column structure and format |
 | `=== Férias ===` | Vacation days per employee — value "1" = vacation day (FED) |
 | `=== Ausências ===` | Absences for the target month (AJD, COD, BMD, etc.) |
@@ -122,6 +122,33 @@ Locate and read each section in the combined CSV by its `=== SECTION NAME ===` h
 The file also contains one section for the previous month (e.g., `=== Maio 2026 ===`) — read it in STEP 3.4.
 
 Read each section in full. Never assume a section was read because its content appeared in a summary.
+
+---
+
+### STEP 3.1.1 — Shift Code Classification (abertura vs fecho)
+
+Immediately after reading `=== Códigos ===`, classify every shift code as **abertura** or **fecho** using the end times from that section:
+
+1. Find the latest H_end value among all working shift codes (e.g., if the latest shift ends at 22:00, that is H_end_max).
+2. **Fecho codes** = all shift codes where H_end ≥ (H_end_max − 1h). These are the closing shifts.
+3. **Abertura codes** = all other working shift codes (earlier end times).
+4. Rest codes (FOD, COD, AJD, BMD, FED, FECHO, FOD-WEEKEND, FOD-FIXED) are neither abertura nor fecho.
+
+Output the classification table before proceeding:
+```
+Classificação de turnos:
+| Código | Início | Fim | Tipo |
+|--------|--------|-----|------|
+| A03    | 08:00  | 17:00 | abertura |
+| B01    | 09:00  | 18:00 | abertura |
+| B09    | 13:00  | 22:00 | fecho    |
+```
+
+**This classification is the only authoritative definition of "abertura" and "fecho" throughout the entire schedule generation.** Do NOT use code families (A-family, B-family, C-family) or letter prefixes as proxies for shift type — only use the end-time classification above. "A-family" and "B09 or C-family" references elsewhere in these instructions always mean the abertura and fecho sets derived here.
+
+If all codes share the same end time (impossible to distinguish), output:
+`"ALERTA: Não foi possível distinguir turnos de abertura e fecho — todos os códigos têm o mesmo horário de fim. Indica quais são os códigos de fecho para continuar."`
+and wait for instruction.
 
 ---
 
@@ -526,8 +553,8 @@ Both values are extracted from "Equipa e regras" — never estimated.
 
 **Senior Technician Presence — HARD CONSTRAINT:**
 Every day must have:
-- Minimum 1 Senior Tech in an opening shift (A-family shifts)
-- Minimum 1 Senior Tech in a closing shift (B09 or C-family shifts)
+- Minimum 1 Senior Tech in an opening shift (abertura codes — as classified in STEP 3.1.1)
+- Minimum 1 Senior Tech in a closing shift (fecho codes — as classified in STEP 3.1.1)
 If this cannot be satisfied for a given day, report and wait for instruction.
 
 **Closure Days (FECHO):** Only 25 December, 1 January, and Easter Sunday. All other days are normal operation, including all other public holidays.
@@ -698,13 +725,13 @@ Only after all confirmations: fill blank cells (—) with working shift codes fr
 **Shift code selection — mandatory per employee:**
 1. Only use codes listed in "Permitted shift codes" for that employee (from STEP 3.3). Any other code is forbidden.
 2. If an employee is permitted multiple shift families, choose based on the day's operational need:
-   - A-family shifts (early start) → cover opening coverage.
-   - B09 or C-family shifts (late close) → cover closing coverage.
-   - **Never assign the same shift code to all employees on a given day.** Use the full range of permitted codes.
+   - Abertura codes (early end time, classified in STEP 3.1.1) → cover opening coverage.
+   - Fecho codes (latest end time, classified in STEP 3.1.1) → cover closing coverage.
+   - **Never assign the same shift code to all employees on a given day.** Use the full range of permitted codes, including both abertura and fecho codes.
 3. Assign Senior Techs (★) first for each day:
-   - Ensure ≥ 1 Senior Tech in an A-family (opening) shift.
-   - Ensure ≥ 1 Senior Tech in a closing shift (B09 or C-family).
-   - Assign Senior Techs to opening or closing as needed, then fill remaining employees.
+   - Ensure ≥ 1 Senior Tech in an abertura code (opening, per STEP 3.1.1 classification).
+   - Ensure ≥ 1 Senior Tech in a fecho code (closing, per STEP 3.1.1 classification).
+   - Assign Senior Techs to abertura or fecho as needed to satisfy both requirements, then fill remaining employees.
 4. If only one code is permitted for an employee: assign it every working day.
 
 During generation, also apply:
@@ -828,8 +855,8 @@ Exception (contractual fixed off-day): IF FOD-FIXED on that day → ✅ PASS
 For every day of the final schedule:
 - Count working ML technicians → compare to ML minimum
 - Count working PN technicians → compare to PN minimum
-- Identify at least 1 Senior Tech in an opening shift (A-family)
-- Identify at least 1 Senior Tech in a closing shift (B09 or C-family)
+- Identify at least 1 Senior Tech in an abertura shift (per STEP 3.1.1 classification)
+- Identify at least 1 Senior Tech in a fecho shift (per STEP 3.1.1 classification)
 
 Output:
 ```
