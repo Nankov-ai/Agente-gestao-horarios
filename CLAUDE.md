@@ -295,9 +295,9 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 33 | G3 — STEP 3.7B FOD placement: reestruturado com STEP 0 de cálculo de rotating_quota (verifica FOD-WEEKEND → conta FOD-FIXED → aplica FED-WEEK → determina quota antes de qualquer placement) |
 | 34 | G4 — PART 4.5: count > 2 = BLOQUEIO com acção definida — remove FOD de menor prioridade e re-verifica; impossível reduzir → BLOQUEIO explícito |
 | 35 | G5 — PART 6 STEP E: correcção de par inválido reescrita — remove o FOD da célula actual, recoloca num slot válido; só reduz quota se nenhum destino disponível |
-| 36 | H1 — STEP 3.1.1 novo: classifica cada código como abertura/fecho pelo H_end real da folha Códigos (fecho = H_end ≥ H_end_max − 1h). Elimina referências hardcodadas "B09 ou C-family" que não existem no workshop — causa de zero turnos de fecho gerados |
-| 37 | H2 — STEP 3.0 FILE INTEGRITY GATE: portão obrigatório antes de tudo. Gemini Pro às vezes só lê excertos de ficheiros grandes e inventa o resto (detetou 4 de 25 colaboradores). Exige prova de leitura completa; HARD STOP se <10 colaboradores ou <5 secções; proíbe inferir/deduzir dados não lidos. STEP 3.1.1 e 3.2 remetem ao portão |
-| 38 | H3 — Apps Script v3: remove exportação de Horários (não necessário); Férias/Ausências exportam só linhas com dados reais (sparse); mês anterior exporta só últimas 8 colunas. Prompt actualizado para 5 secções. Causa raiz: ficheiro demasiado grande para contexto do Gemini |
+| 36 | H1 — STEP 3.1.1 novo: classifica cada código como abertura/fecho pelo H_end real da folha Códigos (fecho = H_end ≥ H_end_max − 1h). Elimina referências hardcodadas "B09 ou C-family" — causa de zero turnos de fecho gerados |
+| H2 | REVERTIDO — STEP 3.0 FILE INTEGRITY GATE removido. Causou regressão: GEM passou a detetar apenas 4 de 25 colaboradores. O ficheiro original funcionava; o portão era a causa do problema, não a solução. |
+| H3 | REVERTIDO — Apps Script restaurado para v2: exporta 6 secções completas (incluindo Horários e mês anterior completo). A versão v3 (sparse + 8 dias) foi over-engineering que não era necessário. |
 
 ### Por implementar
 Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
