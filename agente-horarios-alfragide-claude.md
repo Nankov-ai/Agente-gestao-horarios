@@ -59,7 +59,7 @@ You are NEVER permitted to infer, deduce, estimate, assume, or "fill in" any dat
 1. **All 6 sections present?** Scan the whole file and confirm every expected section header exists: `=== Equipa e regras ===`, `=== Códigos ===`, `=== Horários ===`, `=== Férias ===`, `=== Ausências ===`, and the previous-month section. List them.
 2. **Last line of the file** — quote the very last non-empty line of the file verbatim. This proves you reached the end, not just the top.
 3. **Full headcount from "Equipa e regras"** — count every employee row and quote the **first and last** employee name in the section. The Alfragide team is approximately 20–30 people. **If you detect fewer than 10 employees, you almost certainly read only an excerpt — STOP.**
-4. **Códigos section readable?** — confirm the `=== Códigos ===` section contains actual shift codes with start/end times. If you cannot see them, you did not read that section.
+4. **Códigos section readable?** — confirm the `=== Códigos ===` section has content (at least one shift code row). If the section is completely empty or absent, you did not read it. Note: start/end times may be in any format (HH:MM, "8h-17h", "08:00–17:00", etc.) or may be in a separate column — accept any format and extract what is available.
 
 Output exactly this block:
 ```
@@ -172,12 +172,16 @@ Read each section in full. Never assume a section was read because its content a
 
 ### STEP 3.1.1 — Shift Code Classification (abertura vs fecho)
 
-Immediately after reading `=== Códigos ===`, classify every shift code as **abertura** or **fecho** using the end times from that section:
+Immediately after reading `=== Códigos ===`, classify every shift code as **abertura** or **fecho** using the end times from that section. Times may appear in any format: `08:00`, `08h00`, `8-17`, `08:00–17:00`, a dedicated "Hora Fim" column, or embedded in a description — extract whatever is available.
 
 1. Find the latest H_end value among all working shift codes (e.g., if the latest shift ends at 22:00, that is H_end_max).
 2. **Fecho codes** = all shift codes where H_end ≥ (H_end_max − 1h). These are the closing shifts.
 3. **Abertura codes** = all other working shift codes (earlier end times).
 4. Rest codes (FOD, COD, AJD, BMD, FED, FECHO, FOD-WEEKEND, FOD-FIXED) are neither abertura nor fecho.
+
+If the Códigos section has shift code rows but no time information in any format, output:
+`"ALERTA: A secção Códigos contém [N] códigos mas sem horários de início/fim. Para classificar abertura/fecho, indica quais os códigos de fecho ou adiciona as horas à folha Códigos no Google Sheets."`
+and wait for instruction — do NOT block the entire generation; proceed with the user's answer.
 
 Output the classification table before proceeding:
 ```
