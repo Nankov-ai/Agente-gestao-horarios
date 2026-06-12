@@ -295,6 +295,7 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 33 | G3 — STEP 3.7B FOD placement: reestruturado com STEP 0 de cálculo de rotating_quota (verifica FOD-WEEKEND → conta FOD-FIXED → aplica FED-WEEK → determina quota antes de qualquer placement) |
 | 34 | G4 — PART 4.5: count > 2 = BLOQUEIO com acção definida — remove FOD de menor prioridade e re-verifica; impossível reduzir → BLOQUEIO explícito |
 | 35 | G5 — PART 6 STEP E: correcção de par inválido reescrita — remove o FOD da célula actual, recoloca num slot válido; só reduz quota se nenhum destino disponível |
+| 36 | H1 — STEP 3.1.1 novo: classifica cada código como abertura/fecho pelo H_end real da folha Códigos (fecho = H_end ≥ H_end_max − 1h). Elimina referências hardcodadas "B09 ou C-family" que não existem no workshop — causa de zero turnos de fecho gerados |
 
 ### Por implementar
 Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
