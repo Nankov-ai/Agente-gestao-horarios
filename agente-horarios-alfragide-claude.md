@@ -738,7 +738,7 @@ During generation, also apply:
 
 - **11h rest check:** for every shift assigned, verify H_start ≥ previous shift H_end + 11h. If violated: report and wait for instruction before proceeding.
 - **Suplência enforcement:** cells marked F-LOCK = [shift code] (Suplência F-LOCK) must receive that exact shift code.
-- **Senior coverage:** verify at least 1 Senior Tech in an opening shift and 1 in a closing shift each day.
+- **Senior coverage:** verify at least 1 Senior Tech in an abertura shift and 1 in a fecho shift each day (per STEP 3.1.1 classification).
 
 **F-LOCK INTEGRITY RULE — applies during STEP 4:**
 Cells marked F-LOCK or F-LOCK-HOLE must receive a working shift code. Never FOD, COD, or any rest code. If no valid working shift can be assigned to an F-LOCK cell:
