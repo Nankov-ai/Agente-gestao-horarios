@@ -114,7 +114,7 @@ Locate and read each section in the combined CSV by its `=== SECTION NAME ===` h
 | Section header | What to extract |
 |---|---|
 | `=== Equipa e regras ===` | Headcount · Permitted shift codes per employee · Specialty (ML / PN / Eletricidade / Todas) · Senior Tech marker · "Other info" rules (fixed shifts, fixed off-days, contractual guarantees, suplência/backup assignments) · Minimum daily headcount (general, ML, PN) |
-| `=== Códigos ===` | Full legend of all shift codes + **start and end time for each code** (e.g., `A03: 08:00–17:00`, `B01: 09:00–18:00`, `B09: 13:00–22:00`) — required for 11h rest validation in STEP 4. After reading all codes, classify each as **abertura** or **fecho** (see STEP 3.1.1 below). |
+| `=== Códigos ===` | Full legend of all shift codes + **start and end time for each code** (e.g., `A03: 08:00–17:00`, `B01: 09:00–18:00`, `B09: 13:00–22:00`) — required for 11h rest validation in STEP 4 |
 | `=== Horários ===` | Output grid template — column structure and format |
 | `=== Férias ===` | Vacation days per employee — value "1" = vacation day (FED) |
 | `=== Ausências ===` | Absences for the target month (AJD, COD, BMD, etc.) |
@@ -122,33 +122,6 @@ Locate and read each section in the combined CSV by its `=== SECTION NAME ===` h
 The file also contains one section for the previous month (e.g., `=== Maio 2026 ===`) — read it in STEP 3.4.
 
 Read each section in full. Never assume a section was read because its content appeared in a summary.
-
----
-
-### STEP 3.1.1 — Shift Code Classification (abertura vs fecho)
-
-Immediately after reading `=== Códigos ===`, classify every working shift code as **abertura** or **fecho** based on the end times read from that section.
-
-**Time format in the Códigos section:** Times are written as `XH/YH - ZH/WH` (split shift) or `XH - YH` (single block), where `H` separates hours from minutes (e.g., `7H30` = 07:30, `14H` = 14:00, `21H30` = 21:30). The **end time of a shift = the last time value in the cell**, i.e., the value after the final ` - `. For a split shift like `7H30/12H - 14H/17H30`, the end time is `17H30` (17:30). Convert all times to decimal hours for comparison (e.g., `17H30` = 17.5, `21H30` = 21.5).
-
-1. For each shift code row, extract the end time using the rule above.
-2. Find the latest H_end value among all working shift codes → **H_end_max**.
-3. **Fecho codes** = all shift codes where H_end ≥ (H_end_max − 1h).
-4. **Abertura codes** = all other working shift codes.
-5. Rest codes (FOD, COD, AJD, BMD, FED, FECHO, FOD-WEEKEND, FOD-FIXED) are neither.
-
-Output the classification table:
-```
-Classificação de turnos (abertura / fecho):
-| Código | Início | Fim | Tipo |
-| ...    | ...    | ... | abertura / fecho |
-```
-
-**This classification is the only authoritative definition of abertura and fecho throughout the schedule.** Do not use code letter prefixes (A-, B-, C-) as a proxy for shift type — only use the end-time classification above.
-
-If after applying the parsing rule above no end times can be extracted, output:
-`"ALERTA: Sem horários na secção Códigos — indica quais são os códigos de fecho para continuar."`
-and wait for instruction.
 
 ---
 
@@ -278,11 +251,13 @@ Create a table: one row per employee, one column per calendar day. Pre-fill lock
 **Lock 3 — F-LOCK** (Vacation Buffer Pre-Lock):
 The day immediately before the first FED day of any block AND the day immediately after the last FED day of any block must receive a working shift. Mark these F-LOCK.
 
+**C-tracking during Lock 3 — mandatory:** Before applying F-LOCK to any day, simulate the consecutive-day counter C for that employee up to that day. Use the carryover C from STEP 3.4 as the starting value. For each day from day 1 up to the candidate F-LOCK day (in chronological order), apply the same logic as PART 4.4: increment C for each working/F-LOCK cell, reset C to 0 for each FED/FOD/rest cell. At the candidate F-LOCK day: if C_at_that_day would reach 6 or more by marking it as a working shift, apply the 4th exception below. This simulation is required — do not apply F-LOCK without first computing C at that point.
+
 F-LOCK exceptions — does NOT apply when:
 - Day before FED block = Dom AND previous day = Sáb, both are the employee's guaranteed full weekend, AND FED starts on Seg → F-LOCK does not apply to Sáb/Dom.
 - Day after FED block = Sáb AND following day = Dom, both are the employee's guaranteed full weekend, AND FED ends on Sex → F-LOCK does not apply to Sáb/Dom.
 - **The employee has a contractual fixed off-day on that day → contractual off-day always prevails (Level 2). F-LOCK cannot override a contractual right.**
-- **Applying F-LOCK would create a 6th or longer consecutive working day (counting carryover C from STEP 3.4) → Level 1 (Labor Law) overrides Level 2 (F-LOCK). F-LOCK does not apply; the employee takes a mandatory FOD on that day instead. Report: `"AVISO: F-LOCK suprimido para [Nome] no dia [X] — aplicar F-LOCK criaria [N] dias consecutivos (C=[N−1]). Atribuído FOD obrigatório."`**
+- **Applying F-LOCK would create a 6th or longer consecutive working day (counting simulated C as described above) → Level 1 (Labor Law) overrides Level 2 (F-LOCK). F-LOCK does not apply; the employee takes a mandatory FOD on that day instead. Report: `"AVISO: F-LOCK suprimido para [Nome] no dia [X] — aplicar F-LOCK criaria [N] dias consecutivos (C=[N−1]). Atribuído FOD obrigatório."`**
 
 **Lock 4 — F-LOCK-HOLE** (Isolated day between FED blocks):
 If an employee has FED blocks with an isolated non-FED day between them (e.g., FED days 1–3 and FED days 5–7, leaving day 4 blank), that isolated day is a mandatory working shift — mark it F-LOCK-HOLE. The weekly FOD quota must be placed on other available days in that week.
@@ -490,7 +465,13 @@ Auditoria ⭐ fins de semana:
 
 **Specialty coverage check:**
 For every day, verify working ML ≥ ML minimum and working PN ≥ PN minimum.
-Flag ⚠️ any day below specialty minimum and resolve before presenting the skeleton.
+Any day below specialty minimum = ❌. For each ❌ day:
+1. Identify a rotating FOD assigned to an ML or PN technician on that day whose FOD can move to a day with surplus specialty coverage.
+2. The destination day must pass all forbidden pair and coverage checks.
+3. Move the FOD and re-run VERIFY A, then re-run the specialty check.
+4. If no valid move exists: **BLOQUEIO** — do NOT present the skeleton or proceed to STEP 3.7E.
+   → `"BLOQUEIO: Cobertura de especialidade insuficiente no dia [X] ([N] [ML/PN] < mínimo [M]). Impossível redistribuir FOD sem violar outras restrições. Aguardo instrução."`
+Do NOT treat this as a warning. A specialty ❌ at skeleton stage = mandatory stop.
 
 **Guaranteed weekend completeness check:**
 Scan the skeleton and verify every entitled employee has exactly one FOD-WEEKEND pair (Sáb+Dom). Output:
@@ -553,8 +534,8 @@ Both values are extracted from "Equipa e regras" — never estimated.
 
 **Senior Technician Presence — HARD CONSTRAINT:**
 Every day must have:
-- Minimum 1 Senior Tech in an abertura shift (as classified in STEP 3.1.1)
-- Minimum 1 Senior Tech in a fecho shift (as classified in STEP 3.1.1)
+- Minimum 1 Senior Tech in an opening shift (A-family shifts)
+- Minimum 1 Senior Tech in a closing shift (B09 or C-family shifts)
 If this cannot be satisfied for a given day, report and wait for instruction.
 
 **Closure Days (FECHO):** Only 25 December, 1 January, and Easter Sunday. All other days are normal operation, including all other public holidays.
@@ -716,7 +697,7 @@ List per-employee constraints: fixed shifts, contractual fixed off-days, suplên
 → Wait for user confirmation.
 
 **STEP 3 — Vacations, Absences & Skeleton**
-Present: vacation table (STEP 3.5), absences table (STEP 3.6), stagger plan (STEP 3.7B), and validated skeleton (STEP 3.7E — verified for consecutive days, general coverage, ⭐ weekend coverage, and specialty coverage).
+Present: vacation table (STEP 3.5), absences table (STEP 3.6), stagger plan (STEP 3.7B), and validated skeleton (STEP 3.7E — verified for consecutive days, general coverage, ⭐ weekend coverage, specialty coverage, and guaranteed weekend completeness).
 → Wait for user confirmation.
 
 **STEP 4 — Final Generation**
@@ -725,20 +706,20 @@ Only after all confirmations: fill blank cells (—) with working shift codes fr
 **Shift code selection — mandatory per employee:**
 1. Only use codes listed in "Permitted shift codes" for that employee (from STEP 3.3). Any other code is forbidden.
 2. If an employee is permitted multiple shift families, choose based on the day's operational need:
-   - Abertura codes (as classified in STEP 3.1.1) → cover opening coverage.
-   - Fecho codes (as classified in STEP 3.1.1) → cover closing coverage.
+   - A-family shifts (early start) → cover opening coverage.
+   - B09 or C-family shifts (late close) → cover closing coverage.
    - **Never assign the same shift code to all employees on a given day.** Use the full range of permitted codes.
 3. Assign Senior Techs (★) first for each day:
-   - Ensure ≥ 1 Senior Tech in an abertura shift (per STEP 3.1.1).
-   - Ensure ≥ 1 Senior Tech in a fecho shift (per STEP 3.1.1).
-   - Assign Senior Techs to abertura or fecho as needed, then fill remaining employees.
+   - Ensure ≥ 1 Senior Tech in an A-family (opening) shift.
+   - Ensure ≥ 1 Senior Tech in a closing shift (B09 or C-family).
+   - Assign Senior Techs to opening or closing as needed, then fill remaining employees.
 4. If only one code is permitted for an employee: assign it every working day.
 
 During generation, also apply:
 
 - **11h rest check:** for every shift assigned, verify H_start ≥ previous shift H_end + 11h. If violated: report and wait for instruction before proceeding.
 - **Suplência enforcement:** cells marked F-LOCK = [shift code] (Suplência F-LOCK) must receive that exact shift code.
-- **Senior coverage:** verify at least 1 Senior Tech in an abertura shift and 1 in a fecho shift each day (per STEP 3.1.1).
+- **Senior coverage:** verify at least 1 Senior Tech in an opening shift and 1 in a closing shift each day.
 
 **F-LOCK INTEGRITY RULE — applies during STEP 4:**
 Cells marked F-LOCK or F-LOCK-HOLE must receive a working shift code. Never FOD, COD, or any rest code. If no valid working shift can be assigned to an F-LOCK cell:
@@ -762,7 +743,7 @@ Display for every employee:
 |---|---|---|---|---|---|---|---|---|---|---|
 | [Nome] | T | T | T | T | T | FOD | T | ... | 5 | ✅ |
 
-**T** = any working shift, F-LOCK, F-LOCK-HOLE, WORK-ONLY, or NO-FOD (all will receive working shifts in STEP 4) | **F** = FOD/COD/FED/AJD/BMD/FOD-FIXED/FOD-WEEKEND — resets C to 0.
+**T** = any working shift code from `=== Códigos ===` (skeleton markers WORK-ONLY and NO-FOD must have been replaced by real shift codes in STEP 4 — if any WORK-ONLY or NO-FOD cell still appears here, STOP and complete STEP 4 for those cells before proceeding to this audit) | **F** = FOD/COD/FED/AJD/BMD/FOD-FIXED/FOD-WEEKEND/FECHO — resets C to 0.
 Counter starts from STEP 3.4 carryover. No reset at week/month boundaries.
 
 ---
@@ -855,8 +836,8 @@ Exception (contractual fixed off-day): IF FOD-FIXED on that day → ✅ PASS
 For every day of the final schedule:
 - Count working ML technicians → compare to ML minimum
 - Count working PN technicians → compare to PN minimum
-- Identify at least 1 Senior Tech in an abertura shift (per STEP 3.1.1)
-- Identify at least 1 Senior Tech in a fecho shift (per STEP 3.1.1)
+- Identify at least 1 Senior Tech in an opening shift (A-family)
+- Identify at least 1 Senior Tech in a closing shift (B09 or C-family)
 
 Output:
 ```

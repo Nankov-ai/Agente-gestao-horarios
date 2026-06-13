@@ -295,9 +295,10 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 33 | G3 — STEP 3.7B FOD placement: reestruturado com STEP 0 de cálculo de rotating_quota (verifica FOD-WEEKEND → conta FOD-FIXED → aplica FED-WEEK → determina quota antes de qualquer placement) |
 | 34 | G4 — PART 4.5: count > 2 = BLOQUEIO com acção definida — remove FOD de menor prioridade e re-verifica; impossível reduzir → BLOQUEIO explícito |
 | 35 | G5 — PART 6 STEP E: correcção de par inválido reescrita — remove o FOD da célula actual, recoloca num slot válido; só reduz quota se nenhum destino disponível |
-| 36 | H1 — STEP 3.1.1 novo: classifica cada código como abertura/fecho pelo H_end real da folha Códigos (fecho = H_end ≥ H_end_max − 1h). Elimina referências hardcodadas "B09 ou C-family" — causa de zero turnos de fecho gerados |
-| H2 | REVERTIDO — STEP 3.0 FILE INTEGRITY GATE removido. Causou regressão: GEM passou a detetar apenas 4 de 25 colaboradores. O ficheiro original funcionava; o portão era a causa do problema, não a solução. |
-| H3 | REVERTIDO — Apps Script restaurado para v2: exporta 6 secções completas (incluindo Horários e mês anterior completo). A versão v3 (sparse + 8 dias) foi over-engineering que não era necessário. |
+| 36 | H1 — STEP 3.7A Lock 3: instrução explícita de simulação do contador C antes de cada F-LOCK — impede aplicação de F-LOCK sem verificar se criaria 6.º dia consecutivo |
+| 37 | H2 — STEP 3.7D Specialty check: ❌ passa a BLOQUEIO explícito (não ⚠️) — com acção definida: mover FOD, re-verificar; impossível → BLOQUEIO com mensagem |
+| 38 | H3 — PART 5 STEP 3: 4.ª verificação do esqueleto adicionada — "completude do stagger" (garantido fim de semana a todos os elegíveis) |
+| 39 | H4 — PART 6 STEP A: legenda T corrigida — WORK-ONLY/NO-FOD são marcadores de esqueleto que devem ter sido substituídos por códigos reais antes da auditoria; menção agora explicitamente proibida como entrada válida |
 
 ### Por implementar
 Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
