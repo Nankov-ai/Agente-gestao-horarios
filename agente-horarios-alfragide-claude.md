@@ -127,12 +127,15 @@ Read each section in full. Never assume a section was read because its content a
 
 ### STEP 3.1.1 — Shift Code Classification (abertura vs fecho)
 
-Immediately after reading `=== Códigos ===`, classify every working shift code as **abertura** or **fecho** based on the end times read from that section:
+Immediately after reading `=== Códigos ===`, classify every working shift code as **abertura** or **fecho** based on the end times read from that section.
 
-1. Find the latest H_end value among all working shift codes → **H_end_max**.
-2. **Fecho codes** = all shift codes where H_end ≥ (H_end_max − 1h).
-3. **Abertura codes** = all other working shift codes.
-4. Rest codes (FOD, COD, AJD, BMD, FED, FECHO, FOD-WEEKEND, FOD-FIXED) are neither.
+**Time format in the Códigos section:** Times are written as `XH/YH - ZH/WH` (split shift) or `XH - YH` (single block), where `H` separates hours from minutes (e.g., `7H30` = 07:30, `14H` = 14:00, `21H30` = 21:30). The **end time of a shift = the last time value in the cell**, i.e., the value after the final ` - `. For a split shift like `7H30/12H - 14H/17H30`, the end time is `17H30` (17:30). Convert all times to decimal hours for comparison (e.g., `17H30` = 17.5, `21H30` = 21.5).
+
+1. For each shift code row, extract the end time using the rule above.
+2. Find the latest H_end value among all working shift codes → **H_end_max**.
+3. **Fecho codes** = all shift codes where H_end ≥ (H_end_max − 1h).
+4. **Abertura codes** = all other working shift codes.
+5. Rest codes (FOD, COD, AJD, BMD, FED, FECHO, FOD-WEEKEND, FOD-FIXED) are neither.
 
 Output the classification table:
 ```
@@ -143,7 +146,7 @@ Classificação de turnos (abertura / fecho):
 
 **This classification is the only authoritative definition of abertura and fecho throughout the schedule.** Do not use code letter prefixes (A-, B-, C-) as a proxy for shift type — only use the end-time classification above.
 
-If times are not available in the Códigos section, output:
+If after applying the parsing rule above no end times can be extracted, output:
 `"ALERTA: Sem horários na secção Códigos — indica quais são os códigos de fecho para continuar."`
 and wait for instruction.
 
