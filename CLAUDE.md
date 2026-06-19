@@ -300,8 +300,28 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 38 | H3 — PART 5 STEP 3: 4.ª verificação do esqueleto adicionada — "completude do stagger" (garantido fim de semana a todos os elegíveis) |
 | 39 | H4 — PART 6 STEP A: legenda T corrigida — WORK-ONLY/NO-FOD são marcadores de esqueleto que devem ter sido substituídos por códigos reais antes da auditoria; menção agora explicitamente proibida como entrada válida |
 
+### Reescrita v3 (sessão 2026-06-19)
+Prompt reescrito de raiz com base na versão NL anterior (`agente-horarios-alfragide.md`). Causa: a versão v2 (950 linhas, pseudocódigo, STEP 0 com variáveis) activava Gemini Thinking em vez de Pro, e o Pro recusava STEP 3.4 com "isso está além do que consigo fazer". A v3 elimina todo o pseudocódigo e usa linguagem natural ao longo. Tamanho reduzido de ~950 para ~470 linhas.
+
+**Adições críticas na v3 (linguagem natural):**
+- Pares FOD proibidos completos: Seg+Ter, Ter+Qua, Qua+Qui adicionados à tabela
+- Semana com FOD-WEEKEND = zero FODs rotativos (regra explícita em STEP 3.7B)
+- FOD-FIXED conta para a quota semanal de 2 (STEP 3.7B + PART 4.2)
+- Sénior ao fecho: verificação obrigatória antes de colocar FOD em técnico sénior de fecho (STEP 3.7B + STEP 3.7D + STEP G)
+- Mínimo de sexta separado do mínimo geral (STEP 3.7B + PART 7)
+- BLOQUEIO no esqueleto (STEP 3.7D) em vez de ⚠️ — não avança sem resolver
+- CSV combinado (Apps Script) como fonte de dados — elimina limitação .xlsx
+- PART 4.4 sem pseudocódigo — linguagem natural
+
 ### Por implementar
-Nenhuma alteração pendente identificada. Próxima iteração será baseada em feedback do teste com horário real.
+Identificadas em análise do horário de junho 2026 (sessão 2026-06-13):
+
+| # | Alteração | Prioridade |
+|---|---|---|
+| I | Senior Tech Presence no FOD placement: antes de colocar FOD num técnico sénior de fecho, verificar se há outro sénior disponível para o fecho nesse dia. Se não → dia inelegível para FOD. Adicionar também como 5.ª gate no STEP 3.7D VERIFY B, com BLOQUEIO se irresolúvel. | Crítica |
+| II | Lock 9 — clarificar que pares de suplência mútua são processados antes de todos os outros colaboradores em cada semana, não dentro do loop geral. | Média |
+| III | FED-WEEK REST DAY RULE — adicionar `BLOCKED-FOR-B` e `Suplência F-LOCK` à lista de exclusão de "available slots", para não sobrecontar slots quando STEP 0 calcula a quota. | Média |
+| IV | PART 5 STEP 4 — clarificar que células F-LOCK genéricas (Vacation Buffer, não Suplência) seguem a mesma lógica de seleção de turno que células normais (—): balanço abertura/fecho, sénior primeiro. | Baixa |
 
 ---
 
