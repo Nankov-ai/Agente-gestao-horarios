@@ -314,14 +314,14 @@ Prompt reescrito de raiz com base na versão NL anterior (`agente-horarios-alfra
 - PART 4.4 sem pseudocódigo — linguagem natural
 
 ### Por implementar
-Identificadas em análise do horário de junho 2026 (sessão 2026-06-13):
+Identificadas em análise do horário de julho 2026 (sessão 2026-06-21):
 
 | # | Alteração | Prioridade |
 |---|---|---|
-| I | Senior Tech Presence no FOD placement: antes de colocar FOD num técnico sénior de fecho, verificar se há outro sénior disponível para o fecho nesse dia. Se não → dia inelegível para FOD. Adicionar também como 5.ª gate no STEP 3.7D VERIFY B, com BLOQUEIO se irresolúvel. | Crítica |
-| II | Lock 9 — clarificar que pares de suplência mútua são processados antes de todos os outros colaboradores em cada semana, não dentro do loop geral. | Média |
-| III | FED-WEEK REST DAY RULE — adicionar `BLOCKED-FOR-B` e `Suplência F-LOCK` à lista de exclusão de "available slots", para não sobrecontar slots quando STEP 0 calcula a quota. | Média |
-| IV | PART 5 STEP 4 — clarificar que células F-LOCK genéricas (Vacation Buffer, não Suplência) seguem a mesma lógica de seleção de turno que células normais (—): balanço abertura/fecho, sénior primeiro. | Baixa |
+| I | **Equidade primeiro no FOD placement (STEP 3.7B):** substituir a prioridade fixa Seg/Ter → Qua/Qui → Sex por lógica de equidade: contar os FODs já colocados em cada dia da semana (Seg–Sex) e colocar no dia com menos FODs. Usar Seg>Ter>Qua>Qui>Sex apenas como desempate. Causa do problema: com prioridade fixa, todos os colaboradores escolhem Seg/Ter → concentração massiva de FODs nessas segundas e terças, quase zero às quintas. | Crítica |
+| II | **Exploração de padrões alternativos no VERIFY B (STEP 3.7D):** quando a cobertura falha num dia, antes de declarar BLOQUEIO o GEM deve tentar: (1) mover FOD de dia com excesso para dia em falta; (2) trocar FODs entre dois colaboradores; (3) explorar padrões T T FOD T T T FOD (2+3 dias de trabalho) que são legais e aumentam a flexibilidade de placement. O GEM deve perceber que não é obrigado a colocar 5 dias consecutivos — qualquer padrão com máx. 5 seguidos é válido. | Crítica |
+| III | Senior Tech Presence no FOD placement: antes de colocar FOD num técnico sénior de fecho, verificar se há outro sénior disponível para o fecho nesse dia. Se não → dia inelegível para FOD. Adicionar também como gate no STEP 3.7D VERIFY B, com BLOQUEIO se irresolúvel. | Alta |
+| IV | Lock 9 — clarificar que pares de suplência mútua são processados antes de todos os outros colaboradores em cada semana, não dentro do loop geral. | Média |
 
 ---
 
