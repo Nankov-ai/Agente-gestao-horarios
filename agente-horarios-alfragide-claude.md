@@ -222,10 +222,10 @@ For each employee, for each calendar week:
 - **Week with FOD-FIXED days:** each FOD-FIXED counts toward the 2-rest-day weekly total. Place only enough rotating FODs to reach a total of 2. If FOD-FIXED already totals 2 or more, place no rotating FODs this week.
 - **All other weeks:** place exactly 2 rotating FOD days in blank cells that are not F-LOCK and not Sáb or Dom.
 
-FOD placement priority (use later options only when earlier ones are unavailable or would create a forbidden pair):
-1. Seg or Ter
-2. Qua or Qui
-3. Sex — last resort only
+**FOD placement — equity rule (mandatory):**
+Before placing each rotating FOD, count how many FODs are already placed on each valid weekday (Seg, Ter, Qua, Qui, Sex) across ALL employees for that week. Place the FOD on the weekday with the **fewest existing FODs** — this distributes rest days evenly across the week and prevents coverage from collapsing on specific days. When two or more days are tied for fewest FODs, use this tiebreaker order: Seg > Ter > Qua > Qui > Sex. Sex is a high-volume day — only place FOD on Sex when all other weekdays are blocked or already at the same FOD count.
+
+Never place rotating FOD on Sáb or Dom.
 
 **Before placing any FOD on a given day, verify all of the following:**
 - The cell is not F-LOCK, FOD-FIXED, or a suplência cell.
@@ -257,8 +257,12 @@ If any employee shows more than 5 consecutive: move one of their FOD days to bre
 
 Count working employees for each calendar day by going through every employee row and counting cells with shift codes. Compare against the day-type minimum.
 
-Any day below minimum = ❌ BLOQUEIO — do NOT present the skeleton. Find an employee with a rotating FOD on that day whose FOD can move to a day with surplus coverage. Move it, re-run VERIFY A, then re-check coverage. If no valid move exists:
-`"BLOQUEIO: Cobertura insuficiente no dia [X]. Impossível redistribuir sem violar outras restrições. Aguardo instrução."`
+Any day below minimum = ❌ BLOQUEIO — do NOT present the skeleton. Before declaring BLOQUEIO, try the following resolution steps in order:
+
+1. **Move a single FOD:** Find an employee with a rotating FOD on day X whose FOD can move to a day with surplus coverage. Move it, re-run VERIFY A, re-check coverage.
+2. **Swap FODs between two employees:** If moving one FOD creates a new coverage problem elsewhere, try swapping FODs between two employees in the same week — Employee A's FOD moves from day X to day Y, Employee B's FOD moves from day Y to day X. This can resolve simultaneous shortfalls.
+3. **Explore alternative patterns:** Remember that employees do NOT need to work 5 consecutive days before a rest day. Patterns like T T FOD T T T FOD (2 days + rest + 3 days + rest) are fully legal and can open up FOD placement options that a strict 5-consecutive approach misses. If coverage fails, consider whether redistributing FODs into non-consecutive patterns (e.g., T T FOD T T T FOD instead of T T T T T FOD FOD) would solve the shortfall without creating new violations.
+4. If none of the above resolves all ❌ days: `"BLOQUEIO: Cobertura insuficiente no dia [X]. Tentei redistribuição simples, troca entre colaboradores e padrões alternativos — impossível resolver sem violar outras restrições. Aguardo instrução."`
 
 **⭐ Weekend coverage — mandatory separate check:**
 For every Sáb and Dom, apply the ⭐ weekend coverage floor from "Equipa e regras". Any Sáb or Dom below the floor = ❌ BLOQUEIO.

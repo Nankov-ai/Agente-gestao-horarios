@@ -300,6 +300,12 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 38 | H3 — PART 5 STEP 3: 4.ª verificação do esqueleto adicionada — "completude do stagger" (garantido fim de semana a todos os elegíveis) |
 | 39 | H4 — PART 6 STEP A: legenda T corrigida — WORK-ONLY/NO-FOD são marcadores de esqueleto que devem ter sido substituídos por códigos reais antes da auditoria; menção agora explicitamente proibida como entrada válida |
 
+### Adições v3.1 (sessão 2026-06-21)
+| # | Alteração |
+|---|---|
+| 40 | I — STEP 3.7B FOD placement: equidade primeiro — contar FODs já colocados em cada dia da semana e colocar no dia com menos FODs; Seg>Ter>Qua>Qui>Sex só como desempate. Elimina concentração massiva em Seg/Ter. |
+| 41 | II — STEP 3.7D VERIFY B: antes de BLOQUEIO, o GEM tenta 3 passos: (1) mover FOD simples; (2) trocar FODs entre 2 colaboradores; (3) explorar padrões alternativos T T FOD T T T FOD — colaboradores não são obrigados a trabalhar 5 dias seguidos. |
+
 ### Reescrita v3 (sessão 2026-06-19)
 Prompt reescrito de raiz com base na versão NL anterior (`agente-horarios-alfragide.md`). Causa: a versão v2 (950 linhas, pseudocódigo, STEP 0 com variáveis) activava Gemini Thinking em vez de Pro, e o Pro recusava STEP 3.4 com "isso está além do que consigo fazer". A v3 elimina todo o pseudocódigo e usa linguagem natural ao longo. Tamanho reduzido de ~950 para ~470 linhas.
 
@@ -318,8 +324,6 @@ Identificadas em análise do horário de julho 2026 (sessão 2026-06-21):
 
 | # | Alteração | Prioridade |
 |---|---|---|
-| I | **Equidade primeiro no FOD placement (STEP 3.7B):** substituir a prioridade fixa Seg/Ter → Qua/Qui → Sex por lógica de equidade: contar os FODs já colocados em cada dia da semana (Seg–Sex) e colocar no dia com menos FODs. Usar Seg>Ter>Qua>Qui>Sex apenas como desempate. Causa do problema: com prioridade fixa, todos os colaboradores escolhem Seg/Ter → concentração massiva de FODs nessas segundas e terças, quase zero às quintas. | Crítica |
-| II | **Exploração de padrões alternativos no VERIFY B (STEP 3.7D):** quando a cobertura falha num dia, antes de declarar BLOQUEIO o GEM deve tentar: (1) mover FOD de dia com excesso para dia em falta; (2) trocar FODs entre dois colaboradores; (3) explorar padrões T T FOD T T T FOD (2+3 dias de trabalho) que são legais e aumentam a flexibilidade de placement. O GEM deve perceber que não é obrigado a colocar 5 dias consecutivos — qualquer padrão com máx. 5 seguidos é válido. | Crítica |
 | III | Senior Tech Presence no FOD placement: antes de colocar FOD num técnico sénior de fecho, verificar se há outro sénior disponível para o fecho nesse dia. Se não → dia inelegível para FOD. Adicionar também como gate no STEP 3.7D VERIFY B, com BLOQUEIO se irresolúvel. | Alta |
 | IV | Lock 9 — clarificar que pares de suplência mútua são processados antes de todos os outros colaboradores em cada semana, não dentro do loop geral. | Média |
 
