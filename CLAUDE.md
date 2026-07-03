@@ -238,13 +238,16 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 ## Próximos Passos
 
 ### Alfragide (prioridade imediata)
-1. Testar com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
+1. Testar prompt v3.1 com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
 2. Validar que as violações identificadas foram eliminadas:
-   - Pares FOD consecutivos (Seg+Ter, etc.)
-   - 3 FODs na mesma semana (fim de semana garantido + FOD rotativo)
-   - Cobertura ❌ em Sextas-feiras e Terças-feiras
-   - BLOQUEIO ignorado (publicação com dias ❌)
-3. Iterar com feedback da equipa da oficina até aprovação
+   - Concentração de FODs em Seg/Ter (corrigido em v3.1 com equidade primeiro)
+   - Dias com 3–5 colaboradores a trabalhar (corrigido em v3.1 com exploração de padrões alternativos)
+   - Sénior ausente ao fecho (parcialmente corrigido em v3 — pendente item III)
+   - Pares FOD consecutivos (corrigido em v3)
+   - BLOQUEIO ignorado / publicação com dias ❌ (corrigido em v3)
+3. **Versão activa do prompt:** `agente-horarios-alfragide-claude.md` (v3.1, ~490 linhas, linguagem natural, sem pseudocódigo)
+4. **Modelo obrigatório:** Gemini Pro — seleccionar manualmente antes de iniciar chat (Thinking e Flash recusam passos a meio)
+5. Iterar com feedback da equipa da oficina até aprovação
 
 ### GEMs Departamentais
 5. Criar GEM para RH com a skill gem-builder
