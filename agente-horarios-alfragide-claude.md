@@ -92,8 +92,8 @@ Scan the entire CSV file for `=== ` headers and list every section found. Then r
 | Section | What to extract |
 |---|---|
 | `=== Equipa e regras ===` | Full employee list · permitted shift codes per employee · specialty (ML/PN/Eletricidade) · Senior Tech marker · individual rules (fixed shifts, fixed off-days, suplência/backup) · general daily minimum headcount · ML minimum · PN minimum |
-| `=== Códigos ===` | All shift codes + start and end times — required for 11h rest validation |
-| `=== Horários ===` | Output grid template and format |
+| `=== Códigos ===` | Absence and rest codes only (FOD, FED, BMD, AJD, COD, etc.) — no shift times here |
+| `=== Horários ===` | **Primary source for shift codes and times.** Contains four shift families: **A** (opening shifts), **B** (closing shifts), **C** (late shifts), **I** (early shift). Each row number is the sub-code — e.g., row 9 of column A = code A09 = 8H30/13H - 14H/17H30. Extract every code and its exact start/end times — required for 11h rest validation. All codes listed here are valid shift codes. |
 | `=== Férias ===` | Vacation days per employee — value "1" = vacation (FED) |
 | `=== Ausências ===` | Absences (AJD, COD, BMD, etc.) for the target month |
 | `=== [Previous month] ===` | Last month's schedule — used in STEP 3.4 |
@@ -113,12 +113,20 @@ Do not proceed until confirmed.
 ### STEP 3.3 — Complete Rules Reading
 
 Read "Equipa e regras" line by line without summarising. For each employee, extract and register:
-1. Permitted shift codes
+1. Permitted shift codes — if no restriction is specified, the employee may use **any code from the A, B, or C families** listed in `=== Horários ===`
 2. Specialty (ML, PN, Eletricidade, or all)
 3. Senior Tech status (yes/no)
 4. Contractual fixed off-days (e.g., "always off Sáb+Dom") — inviolable
 5. Suplência/backup rules — exact rule: "If A is absent, B must work [shift]"
 6. Any other "Other info" constraint
+
+**Known individual rules (do not override with assumptions):**
+- **PATRICIO RIBEIRO (3184):** Only permitted code is A09 (8H30/13H - 14H/17H30). FOD-FIXED every **Saturday AND Sunday** — works Monday to Friday only. The 2-rest-days/week quota is fully satisfied by Sáb+Dom FOD-FIXED every week. No additional rotating FODs are placed for this employee.
+- **DIOGO RAMOS (2551):** FOD-FIXED every Saturday AND Sunday. Only code A33. No rotating FODs.
+- **MYCHAELL (3661):** FOD-FIXED every Sunday AND Monday. Only code A15. The FOD-FIXED pair satisfies the 2-rest-days/week quota — no additional rotating FODs.
+- **WUDSON (3899):** Only code A15.
+- **MIGUEL AZEVEDO (3004):** Only codes B01 or B09 (closing shifts only).
+- **HUGO MARTINS (4241) and JOÃO BORGA (1621):** Only code B01. Mutual backup — if one is absent, the other must work.
 
 Output a complete rules summary per employee and wait for confirmation.
 Output exactly: `"Analisei todas as regras no(s) ficheiro(s) partilhados na fonte e anexados (se houver)"`
@@ -425,13 +433,13 @@ Present: vacation table, absences table, stagger plan, and validated skeleton (S
 → Wait for user confirmation.
 
 **STEP 4 — Final Generation**
-Only after all confirmations: fill blank cells (—) with working shift codes from `=== Códigos ===`. Every code must exist in that section — no placeholders, no invented codes.
+Only after all confirmations: fill blank cells (—) with working shift codes from `=== Horários ===`. Every code used must exist in that section — no placeholders, no invented codes.
 
 **Shift code selection — mandatory per employee:**
-1. Only use codes listed as permitted for that employee.
-2. A-family shifts → opening coverage. B09 or C-family → closing coverage. Never the same code for all employees on the same day.
+1. Only use codes permitted for that employee (from STEP 3.3). If no restriction: any A, B, or C family code from `=== Horários ===` is valid.
+2. A-family shifts → opening coverage. B-family and C-family → closing/mid-late coverage. Mix codes across employees on the same day — never assign the same code to everyone.
 3. Assign Senior Techs first: ensure ≥ 1 in an opening shift and ≥ 1 in a closing shift each day.
-4. Verify 11h rest between consecutive shifts for each employee.
+4. Verify 11h rest between consecutive shifts for each employee (use exact times from `=== Horários ===`).
 5. F-LOCK cells must receive a working shift code — never a rest code. If no valid shift fits:
    `"BLOQUEIO: Não consigo atribuir turno à célula F-LOCK de [Nome] no dia [X]. Aguardo instrução."`
 

@@ -309,6 +309,16 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 40 | I — STEP 3.7B FOD placement: equidade primeiro — contar FODs já colocados em cada dia da semana e colocar no dia com menos FODs; Seg>Ter>Qua>Qui>Sex só como desempate. Elimina concentração massiva em Seg/Ter. |
 | 41 | II — STEP 3.7D VERIFY B: antes de BLOQUEIO, o GEM tenta 3 passos: (1) mover FOD simples; (2) trocar FODs entre 2 colaboradores; (3) explorar padrões alternativos T T FOD T T T FOD — colaboradores não são obrigados a trabalhar 5 dias seguidos. |
 
+### Adições v3.2 (sessão 2026-07-04)
+| # | Alteração |
+|---|---|
+| 42 | J1 — STEP 3.1: `=== Horários ===` passa a ser a fonte primária de códigos de turno e horários (A, B, C, I families + tempos exactos). `=== Códigos ===` passa a ser apenas para códigos de ausência/descanso. |
+| 43 | J2 — STEP 3.3: Por defeito, colaboradores sem restrição de código podem usar qualquer código das famílias A, B ou C de `=== Horários ===`. Elimina limitação ao trio A03/B01/B09. |
+| 44 | J3 — STEP 3.3: Regras individuais conhecidas declaradas explicitamente: Patrício Ribeiro (FOD-FIXED Sáb+Dom todos os fins de semana, só A09); Diogo Ramos (FOD-FIXED Sáb+Dom, só A33); Mychaell (FOD-FIXED Dom+Seg, só A15); Wudson (só A15); Miguel Azevedo (só B01/B09); Hugo Martins e João Borga (só B01, suplência mútua). |
+| 45 | J4 — STEP 4 / PART 5: seleção de códigos actualizada — usa `=== Horários ===` como fonte; A-family = abertura; B/C-family = fecho/intermédio; mix obrigatório por dia. |
+
+**Nota sobre Patrício Ribeiro (sessão 2026-07-04):** A regra "folga todos os domingos" no ficheiro Excel estava a ser interpretada literalmente. A prática real (confirmada pelo responsável) é: **FOD-FIXED todos os Sáb+Dom** (trabalha segunda a sexta exclusivamente). O horário de Maio feito pelo humano continha violações desta regra (A18 ao domingo) que foram aceites na prática — o GEM deve seguir a versão corrigida: FOD-FIXED Sáb+Dom, só A09.
+
 ### Reescrita v3 (sessão 2026-06-19)
 Prompt reescrito de raiz com base na versão NL anterior (`agente-horarios-alfragide.md`). Causa: a versão v2 (950 linhas, pseudocódigo, STEP 0 com variáveis) activava Gemini Thinking em vez de Pro, e o Pro recusava STEP 3.4 com "isso está além do que consigo fazer". A v3 elimina todo o pseudocódigo e usa linguagem natural ao longo. Tamanho reduzido de ~950 para ~470 linhas.
 
