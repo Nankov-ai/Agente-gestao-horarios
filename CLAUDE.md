@@ -120,11 +120,19 @@ GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo
 
 **Estrutura do ficheiro de dados (5 folhas obrigatórias + histórico):**
 - `Equipa e regras` — lista de colaboradores, turnos permitidos, regras individuais
-- `Códigos` — legenda de todos os códigos de turno + horários início/fim (necessário para validação 11h)
-- `Horários` — grelha template de horário
+- `Códigos` — apenas códigos de ausência/descanso (FOD, FED, BMD, AJD, COD, etc.) — **não contém tempos de turno**
+- `Horários` — **fonte primária de códigos de turno e horários** — famílias A (abertura), B (fecho), C (intermédio), I (early); cada linha = sub-código (ex: linha 9 da coluna A = A09 = 8H30/13H-14H/17H30)
 - `Férias` — dias FED por colaborador (valor "1" = dia de férias)
 - `Ausências` — AJD, COD, BMD e outras ausências
 - *(+ folha do mês anterior para carryover — detetada automaticamente pelo Apps Script)*
+
+**Regras individuais confirmadas (sessão 2026-07-04):**
+- **Patrício Ribeiro (3184):** FOD-FIXED todos os Sáb+Dom (trabalha Seg–Sex); só A09 = 8H30/13H-14H/17H30. Regra "folga todos os domingos" no Excel estava imprecisa — a prática correcta é Sáb+Dom off em todas as semanas.
+- **Diogo Ramos (2551):** FOD-FIXED todos os Sáb+Dom; só A33.
+- **Mychaell (3661):** FOD-FIXED todos os Dom+Seg; só A15.
+- **Wudson (3899):** só A15.
+- **Miguel Azevedo (3004):** só B01 ou B09 (turnos de fecho).
+- **Hugo Martins (4241) / João Borga (1621):** só B01; suplência mútua.
 
 **Modelo obrigatório:** Gemini Pro (Flash e Thinking param a meio das instruções e não leem as férias)
 
@@ -238,16 +246,27 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 ## Próximos Passos
 
 ### Alfragide (prioridade imediata)
-1. Testar prompt v3.1 com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
-2. Validar que as violações identificadas foram eliminadas:
-   - Concentração de FODs em Seg/Ter (corrigido em v3.1 com equidade primeiro)
-   - Dias com 3–5 colaboradores a trabalhar (corrigido em v3.1 com exploração de padrões alternativos)
-   - Sénior ausente ao fecho (parcialmente corrigido em v3 — pendente item III)
-   - Pares FOD consecutivos (corrigido em v3)
-   - BLOQUEIO ignorado / publicação com dias ❌ (corrigido em v3)
-3. **Versão activa do prompt:** `agente-horarios-alfragide-claude.md` (v3.1, ~490 linhas, linguagem natural, sem pseudocódigo)
-4. **Modelo obrigatório:** Gemini Pro — seleccionar manualmente antes de iniciar chat (Thinking e Flash recusam passos a meio)
-5. Iterar com feedback da equipa da oficina até aprovação
+1. Testar prompt **v3.2** com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
+2. Validar que as melhorias v3.x produziram efeito:
+   - ✅ Concentração de FODs em Seg/Ter (corrigido v3.1 — equidade primeiro)
+   - ✅ Dias com poucos colaboradores (corrigido v3.1 — padrões alternativos)
+   - ✅ Pares FOD consecutivos (corrigido v3)
+   - ✅ Códigos limitados a A03/B01/B09 (corrigido v3.2 — todos os códigos de Horários válidos)
+   - ✅ Patrício Ribeiro com regra errada (corrigido v3.2 — FOD-FIXED Sáb+Dom)
+   - 🔴 Sénior ausente ao fecho (pendente — item III)
+3. Violações identificadas no horário de Junho 2026 (gerado pelo GEM, sessão 2026-07-04):
+   - Patrício Ribeiro: FOD(Sex)+FOD-W(Sáb)+FOD-W(Dom) = 3 dias consecutivos
+   - Cristian: FOD-WEEKEND perdido quando GEM reorganizou stagger; semana 3 com só 1 FOD
+   - STEP E da auditoria: apenas 3 de 25 colaboradores mostrados (auditoria parcial)
+4. **Versão activa do prompt:** `agente-horarios-alfragide-claude.md` (v3.2, ~600 linhas, linguagem natural, sem pseudocódigo)
+5. **Modelo obrigatório:** Gemini Pro — seleccionar manualmente antes de iniciar chat
+6. Iterar com feedback da equipa da oficina até aprovação
+
+### Limitação técnica confirmada (sessão 2026-07-04)
+- **Gemini Gem tem limite de ~8.000 caracteres** no campo Instructions
+- O prompt actual tem ~29.000+ caracteres — o GEM nunca lê as PARTS 4–8
+- Possível solução: Claude Project (suporta ~200K tokens, sem limite prático)
+- Alternativa: comprimir o prompt para ≤7.500 chars (perde detalhe das regras)
 
 ### GEMs Departamentais
 5. Criar GEM para RH com a skill gem-builder
