@@ -75,7 +75,11 @@ flowchart TD
 
 GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo que os GEMs departamentais standard — inclui conformidade com Direito do Trabalho português, gestão de folgas rotativas, férias e continuidade entre meses.
 
-**Ficheiro do prompt (versão ativa):** `c:\projetos\GEM\agente-horarios-alfragide-claude.md` — linguagem natural, estrutura em 8 PARTS, com pré-locks no esqueleto
+**Ficheiro do prompt (versão ativa Claude):** `c:\projetos\GEM\agente-horarios-alfragide-claude.md` — linguagem natural, estrutura em 8 PARTS, com pré-locks no esqueleto
+
+**Ficheiros do prompt na pasta Gemini:**
+- `Gemini\agente-horarios-alfragide-gem.md` — v4.0 compacto (Gemini Pro Optimized; ~167 linhas; STEP 3.4 para mês anterior simples)
+- `Gemini\agente-horarios-alfragide-80p.md` — **melhor resultado** (instruções em inglês; STEP 3.4 com carryover source + pattern reference para histórico multi-mês; usa `=== Códigos ===` como fonte de turnos e horários)
 
 **Versões de referência (pasta python-gem):**
 - `python-gem\agente-horarios-alfragide.md` — v2 Python (algoritmo estruturado, não usar — GEMs não executam Python)
