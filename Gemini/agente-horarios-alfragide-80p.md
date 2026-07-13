@@ -407,6 +407,35 @@ If no valid slot exists for 2 FODs: output the table showing all blocked/forbidd
 
 ---
 
+**3.7B-POST — WEEKLY REST COUNT VERIFICATION (mandatory after all FOD placements)**
+
+After completing FOD placement for ALL employees across the full month, run this check before VERIFY A.
+
+For every employee, for every calendar week (Mon–Sun):
+Count ALL rest entries in that week: `FOD + FOD-WEEKEND + FOD-FIXED + COD + AJD + BMD + FECHO`
+
+**Rules:**
+- Full week with no FED: count must be **exactly 2**. Never more, never fewer.
+- If count = 3 or more: **BLOQUEIO** — identify which rotating FOD was placed in error and remove it immediately.
+  - The most common cause: a rotating FOD was placed in the same week as FOD-WEEKEND (Sáb+Dom). FOD-WEEKEND already fills the full 2-FOD quota — zero rotating FODs may exist in that week.
+  - Remove the rotating FOD. Do NOT add it to another week (that week already has its own quota).
+- If count = 1 in a full week (no FED-WEEK exception): **BLOQUEIO** — add the missing rotating FOD before proceeding.
+- If count = 0 in a full week: **BLOQUEIO** — always.
+
+Output this check as a compact table:
+```
+Verificação de quota semanal de folgas:
+| Colaborador | Semana | FOD | FOD-W | FOD-F | Outros | Total | OK? |
+|---|---|---|---|---|---|---|---|
+| [Nome] | 02–08 Jun | 2 | 0 | 0 | 0 | 2 | ✅ |
+| [Nome] | 09–15 Jun | 0 | 2 | 0 | 0 | 2 | ✅ |
+| [Nome] | 09–15 Jun | 2 | 2 | 0 | 0 | 4 | ❌ BLOQUEIO |
+```
+
+Do NOT proceed to VERIFY A until every row shows ✅.
+
+---
+
 **3.7C — VERIFY A: Consecutive working days (full month scan)**
 
 After placing all FOD days, trace each employee's full sequence from their carryover C (STEP 3.4). Count every run of consecutive working or blank cells across the full month, ignoring week and month boundaries.
