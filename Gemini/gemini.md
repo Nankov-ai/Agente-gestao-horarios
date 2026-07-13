@@ -81,6 +81,53 @@ A próxima iteração (v3.4) no ficheiro `agente-horarios-alfragide-gem.md` ter�
 | **C2** | **VERIFY B Weekend Gate:** Adicionar uma auditoria bloqueante (gate) no esqueleto do fim de semana para barrar qualquer atribuição que falhe a distribuição equitativa do *stagger*. | Idem (causa raiz de B09★). |
 | **C3** | **FOD Placement Array Check:** Verificação algorítmica iterativa (célula a célula via Pandas/Python) para proibir os pares de folgas ilegais identificados. | Falha "A33★": Alguns conseguiam a sequência perigosa e ilegal Sex+Sáb+Dom de folga. |
 | **C4** | **Shift Code Selection Guide (STEP 4):** Instruir a IA a não fazer *default* de `B01` para todos nas aberturas, forçando a distribuição de seniores primeiro e respeitando restrições individuais. | Distribuição pouco inteligente de turnos de abertura (todos recebiam o mesmo código `B01`). |
+| **C5** | **Pre-Flight Audit Scratchpad (Chain of Thought):** Forçar o LLM a escrever o processo de contagem passo a passo (ex: `Dia 1: 23 total - 13 ausentes = 10 ativos`) *antes* de gerar a tabela final. O LLM não pode usar matemática implícita. | Falha Grave: O modelo alucina a contagem de cobertura (escreve 20 quando há 10), ignora pares de folgas proibidos e quebra o limite de 5 dias seguidos. |
+
+---
+
+## 5. Sessão de Chat — 01 de Junho de 2026 (Atualização para v4.1)
+
+Nesta sessão de desenvolvimento com o assistente **Antigravity (Gemini Code Assist Agent)**, analisámos uma captura de ecrã com a escala gerada pela versão v4.0 do *prompt* (que confiava apenas na linguagem natural do LLM, sem Python). 
+
+**Diagnóstico da Sessão:**
+Foi comprovado que a dependência cega no raciocínio espacial e matemático do LLM resultou num colapso absoluto das restrições:
+- **Alucinação Geométrica e Matemática:** O modelo indicava uma cobertura de "20" técnicos num dia em que visivelmente quase metade da equipa (cerca de 13 pessoas) estava de folga/férias.
+- **Quebra do Limite Legal:** Técnicos a trabalhar 6 dias seguidos de forma silenciosa.
+- **Folgas Ilegais:** Criação de pares proibidos (Ter+Qua, Seg+Ter, Dom+Seg).
+- **Falha no Stagger Plan:** Fim de semana sobrecarregado de trabalho, sem folgas equitativas.
+
+**Ação Executada:**
+Para contrariar isto, o *backlog* C1 a C4 foi imediatamente implementado no ficheiro `agente-horarios-alfragide-gem.md`, com a criação urgente do item **C5 (Scratchpad Anti-Alucinação)**. 
+A `PART 6 — MANDATORY PRE-FLIGHT AUDIT` do *prompt* do GEM foi completamente reescrita. O GEM é agora **obrigado** a escrever os cálculos e mapear a sequência "W/R" explicitamente dia a dia em ecrã. O *Chain of Thought* forçado antes da geração da TSV é a defesa adotada nesta nova versão para mitigar as alucinações.
+
+### Transcrição da Sessão de Chat (Recuperação de Contexto)
+Para memória futura e recuperação da sessão, eis o registo cronológico da nossa conversa:
+
+**User:** Olá, és o Gemini code assist?
+**Antigravity:** Olá! Sim, sou o Antigravity, o teu assistente... Li e compreendi as tuas regras globais (Modo Claude vs Modo Gemini). Como posso ajudar-te?
+**User:** Eu tenho o Gemini Code Assist mas tu fazes o mesmo? Também ligas o modo de Agente?
+**Antigravity:** Sim, exatamente! [...] Com o modo Agente ativo, eu consigo fazer muito mais: Navegação, Edição Direta, Planeamento...
+**User:** Dá-me uns minutos
+**Antigravity:** Claro, leva o tempo que precisares.
+**User:** Verifica apenas o ficheiro "gemini.md" neste projeto
+**Antigravity:** (Lê o GEMINI.md na raiz do projeto) Verifiquei... contém uma única regra: O prompt do GEM deve ser sempre escrito em inglês.
+**User:** O quê? Só tem isso escrito?
+**Antigravity:** Ah, peço desculpa pela confusão! Descobri o que se passou. Na verdade, tens dois ficheiros com o nome "gemini.md". O segundo tem um documento extenso (Registo Histórico v4.0).
+**User:** Certo
+**Antigravity:** (Cria um Implementation Plan para as regras C1 a C4).
+**User:** O ultimo prompt gerou o horário no print em anexo. Como podes verificar, quebrou várias regras... Analisa e depois atualizamos ou não o teu Implementation Plan.
+**Antigravity:** (Analisa a imagem e identifica as falhas: Alucinação Matemática, Pares Proibidos, Quebra de 5 Dias). Proponho atualizar o plano com C5 (Scratchpad Anti-Alucinação).
+**User:** Atualiza o gemini.md
+**Antigravity:** (Atualiza a tabela no gemini.md com o C5 e prepara a alteração para o prompt).
+**User:** "gemini.md" é o ficheiro com o historico do nosso chat, o ficheiro "agente-horarios-alfragide-gem.md" é que é o ficheiro do prompt do GEM
+**Antigravity:** (Reverte alterações prematuras feitas por confusão e pede desculpa por ter avançado para a edição do prompt cedo demais).
+**User:** O que ue quero é que graves o historico do chat em "gemini.md" pois preciso de fechar a sessão e regressar mais tarde e recuperar o historico
+**Antigravity:** (Cria a secção "5. Sessão de Chat" no gemini.md resumindo as ações).
+**User:** O que não entendes???? Pedi-te para atualizar o ficheiro "agente-horarios-alfragide-gem.md"???
+**Antigravity:** (Clarifica o mal-entendido garantindo que as modificações tinham sido revertidas).
+**User:** Agora atualiza o ficheiro "agente-horarios-alfragide-gem.md" com C1 & C2 & C3 & C4 & C5 
+**Antigravity:** (Aplica as 5 regras de forma definitiva no ficheiro do prompt).
+**User:** Atualiza o historico do chat no ficheiro "gemini.md". Lê bem o meu pedido
 
 ---
 *Este registo histórico serve de base para auditoria e controlo de versões do ecossistema de horários da Oficina de Alfragide.*
