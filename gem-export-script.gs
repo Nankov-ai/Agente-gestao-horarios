@@ -14,6 +14,7 @@ function onOpen() {
 }
 
 // ── DIAGNÓSTICO ──────────────────────────────────────────────
+// Corre isto primeiro para ver os nomes exatos das folhas
 function diagnostico() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const folhas = ss.getSheets();
@@ -30,7 +31,7 @@ function exportarParaGEM() {
   const ss  = SpreadsheetApp.getActiveSpreadsheet();
   const ui  = SpreadsheetApp.getUi();
 
-  // 5 secções obrigatórias
+  // Nomes aceites para cada secção (variantes com e sem acento, maiúsculas)
   const SECÇÕES = [
     { secção: 'Equipa e regras', variantes: ['Equipa e regras', 'equipa e regras', 'EQUIPA E REGRAS'] },
     { secção: 'Códigos',         variantes: ['Códigos', 'Codigos', 'codigos', 'CÓDIGOS', 'CODIGOS'] },
@@ -54,38 +55,43 @@ function exportarParaGEM() {
     }
     const dados = toCsv(folha);
     if (!dados) {
-      csv += '=== ' + cfg.secção + ' ===\n(sem registos este mês)\n\n';
+      avisos.push('Folha sem dados: "' + cfg.secção + '"');
       continue;
     }
     csv += '=== ' + cfg.secção + ' ===\n' + dados + '\n\n';
   }
 
-  // 2 — Encontrar a folha do mês anterior
-  let ultimaFolhaMes = null;
+  // 2 — Exportar todas as folhas de histórico de horários
+  //     (qualquer folha cujo nome contenha um nome de mês em português)
+  const folhasMes = [];
   for (const folha of ss.getSheets()) {
     const nome = folha.getName().toLowerCase();
     if (MESES_PT.some(m => nome.includes(m))) {
-      ultimaFolhaMes = folha;
+      folhasMes.push(folha);
     }
   }
 
-  if (!ultimaFolhaMes) {
-    avisos.push('Nenhuma folha de mês encontrada — carryover não incluído.');
+  if (folhasMes.length === 0) {
+    avisos.push('Nenhuma folha de horário histórico encontrada — carryover não incluído.');
   } else {
-    const dados = toCsv(ultimaFolhaMes);
-    if (dados) {
-      csv += '=== ' + ultimaFolhaMes.getName() + ' ===\n' + dados + '\n\n';
-    } else {
-      avisos.push('Folha de mês "' + ultimaFolhaMes.getName() + '" está vazia.');
+    for (const folha of folhasMes) {
+      const dados = toCsv(folha);
+      if (dados) {
+        csv += '=== ' + folha.getName() + ' ===\n' + dados + '\n\n';
+      } else {
+        avisos.push('Folha "' + folha.getName() + '" está vazia — ignorada.');
+      }
     }
   }
 
+  // Verificar se gerou algum conteúdo
   if (!csv.trim()) {
     ui.alert(
       '❌ Ficheiro vazio',
       'Nenhuma folha foi exportada.\n\n' +
-      'Corre o "Diagnóstico" para ver os nomes exactos das folhas.\n\n' +
-      (avisos.length ? 'Problemas:\n' + avisos.join('\n') : ''),
+      'Corre o "Diagnóstico" no menu para ver os nomes exactos das folhas\n' +
+      'e confirma que o script está instalado no ficheiro correcto.\n\n' +
+      (avisos.length ? 'Problemas encontrados:\n' + avisos.join('\n') : ''),
       ui.ButtonSet.OK
     );
     return;
@@ -98,6 +104,7 @@ function exportarParaGEM() {
   while (existentes.hasNext()) existentes.next().setTrashed(true);
   const ficheiro = raiz.createFile(NOME_FICHEIRO, csv, MimeType.CSV);
 
+  // 4 — Mostrar resultado
   const prefixo = avisos.length ? '⚠️ Avisos:\n' + avisos.join('\n') + '\n\n' : '';
   ui.alert(
     '✅ GEM Export — Concluído',
@@ -111,11 +118,14 @@ function exportarParaGEM() {
 
 // ── UTILITÁRIOS ──────────────────────────────────────────────
 
+// Encontra a primeira folha cujo nome coincide com uma das variantes
 function encontrarFolha(ss, variantes) {
+  // Tentativa 1: match exato
   for (const v of variantes) {
     const f = ss.getSheetByName(v);
     if (f) return f;
   }
+  // Tentativa 2: match case-insensitive sobre todas as folhas
   for (const folha of ss.getSheets()) {
     const nome = folha.getName().trim().toLowerCase();
     for (const v of variantes) {
@@ -125,10 +135,12 @@ function encontrarFolha(ss, variantes) {
   return null;
 }
 
+// Converte uma folha para CSV com escape correcto
 function toCsv(folha) {
   if (folha.getLastRow() === 0) return '';
   const dados = folha.getDataRange().getValues();
   if (!dados || dados.length === 0) return '';
+
   return dados.map(row =>
     row.map(c => {
       if (c instanceof Date) {

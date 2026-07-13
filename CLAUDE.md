@@ -94,10 +94,10 @@ GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo
 - Instalar: Google Sheets → Extensões → Apps Script → colar o conteúdo → Guardar
 - Menu gerado: `📅 GEM Alfragide` com dois itens: "Exportar para GEM" e "Diagnóstico"
 - "Diagnóstico" lista todas as folhas do ficheiro com nome, linhas e colunas — útil para verificar instalação
-- A exportação gera secções `=== Nome da Folha ===` para cada folha, incluindo automaticamente a folha do mês anterior (deteta pelo nome do mês em português)
+- A exportação gera secções `=== Nome da Folha ===` para cada folha, incluindo **todas as folhas de histórico de horários** (deteta pelo nome do mês em português — Abril, Maio, Junho, etc.)
 - Não usar URL nem Knowledge sources — o CSV combinado via Apps Script é o único método fiável
 
-**Formato do CSV combinado (6 secções):**
+**Formato do CSV combinado (5 secções obrigatórias + todas as folhas de histórico):**
 ```
 === Equipa e regras ===
 [dados]
@@ -114,17 +114,24 @@ GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo
 === Ausências ===
 [dados]
 
-=== [Mês anterior, ex: Maio 2026] ===
+=== Horário Abril 2026 ===
+[dados]
+
+=== Horário Maio 2026 ===
+[dados]
+
+=== Horário Junho 2026 ===
 [dados]
 ```
+*(o número de secções de histórico cresce automaticamente à medida que se adicionam folhas ao Google Sheets)*
 
 **Estrutura do ficheiro de dados (5 folhas obrigatórias + histórico):**
 - `Equipa e regras` — lista de colaboradores, turnos permitidos, regras individuais
-- `Códigos` — apenas códigos de ausência/descanso (FOD, FED, BMD, AJD, COD, etc.) — **não contém tempos de turno**
-- `Horários` — **fonte primária de códigos de turno e horários** — famílias A (abertura), B (fecho), C (intermédio), I (early); cada linha = sub-código (ex: linha 9 da coluna A = A09 = 8H30/13H-14H/17H30)
+- `Códigos` — códigos de turno com tempos exactos (A03: 08:00–17:00, B01: 09:00–18:00, etc.) + códigos de ausência/descanso (FOD, FED, BMD, AJD, COD)
+- `Horários` — grelha de output / template de colunas
 - `Férias` — dias FED por colaborador (valor "1" = dia de férias)
 - `Ausências` — AJD, COD, BMD e outras ausências
-- *(+ folha do mês anterior para carryover — detetada automaticamente pelo Apps Script)*
+- *(+ todas as folhas de histórico — detetadas automaticamente pelo Apps Script pelo nome do mês)*
 
 **Regras individuais confirmadas (sessão 2026-07-04):**
 - **Patrício Ribeiro (3184):** FOD-FIXED todos os Sáb+Dom (trabalha Seg–Sex); só A09 = 8H30/13H-14H/17H30. Regra "folga todos os domingos" no Excel estava imprecisa — a prática correcta é Sáb+Dom off em todas as semanas.
@@ -158,7 +165,7 @@ GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo
 | PART 0 | Golden Rules: idioma pt-PT, fonte única (CSV combinado), Source-Only Rule, Excel Sovereignty Rule, avaliação LLM |
 | PART 2 | Hierarquia de 4 níveis: Lei > Dados Fixos > Cobertura > Preferências |
 | PART 3 — STEP 3.1 | Leitura das 5 secções obrigatórias por header `=== ... ===` + horários dos turnos (Códigos) |
-| PART 3 — STEP 3.4 | Listagem de todas as secções do CSV (STEP 3.4.0); carryover do mês anterior (contador C, último turno, fim de semana garantido, folgas em transição) |
+| PART 3 — STEP 3.4 | Listagem de todas as secções do CSV (STEP 3.4.0); leitura de **todos os meses históricos**; carryover source = mês imediatamente anterior (contador C, último turno, fim de semana garantido, folgas em transição); pattern reference = restantes meses (aprender padrões reais de atribuição de códigos) |
 | PART 3 — STEP 3.5 | Leitura da secção "Férias" (aceita variantes com/sem acento); coluna mapping pós-leitura (não-bloqueante); secção em branco = válida |
 | PART 3 — STEP 3.6 | Leitura da secção "Ausências" (aceita variantes); secção em branco = válida |
 | PART 3 — STEP 3.7A | Esqueleto: Lock 1 FED, Lock 2 AJD/COD/BMD, Lock 3 F-LOCK (buffer férias), Lock 4 F-LOCK-HOLE (dia isolado entre FED), Lock 5 FOD-FIXED (folgas contratuais), Lock 6 Suplência F-LOCK |
@@ -246,21 +253,23 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 ## Próximos Passos
 
 ### Alfragide (prioridade imediata)
-1. Testar prompt **v3.2** com horário real de julho anexando `alfragide-gem.csv` gerado pelo Apps Script
-2. Validar que as melhorias v3.x produziram efeito:
+1. Atualizar o Apps Script no Google Sheets (substituir conteúdo em Extensões → Apps Script pelo ficheiro `gem-export-script.gs` atualizado)
+2. Testar o novo CSV com Abril+Maio+Junho no GEM para validar que o STEP 3.4 lê os 3 meses corretamente
+3. Testar prompt com horário real de julho
+4. Validar que as melhorias v3.x produziram efeito:
    - ✅ Concentração de FODs em Seg/Ter (corrigido v3.1 — equidade primeiro)
    - ✅ Dias com poucos colaboradores (corrigido v3.1 — padrões alternativos)
    - ✅ Pares FOD consecutivos (corrigido v3)
    - ✅ Códigos limitados a A03/B01/B09 (corrigido v3.2 — todos os códigos de Horários válidos)
    - ✅ Patrício Ribeiro com regra errada (corrigido v3.2 — FOD-FIXED Sáb+Dom)
    - 🔴 Sénior ausente ao fecho (pendente — item III)
-3. Violações identificadas no horário de Junho 2026 (gerado pelo GEM, sessão 2026-07-04):
+5. Violações identificadas no horário de Junho 2026 (gerado pelo GEM, sessão 2026-07-04):
    - Patrício Ribeiro: FOD(Sex)+FOD-W(Sáb)+FOD-W(Dom) = 3 dias consecutivos
    - Cristian: FOD-WEEKEND perdido quando GEM reorganizou stagger; semana 3 com só 1 FOD
    - STEP E da auditoria: apenas 3 de 25 colaboradores mostrados (auditoria parcial)
-4. **Versão activa do prompt:** `agente-horarios-alfragide-claude.md` (v3.2, ~600 linhas, linguagem natural, sem pseudocódigo)
-5. **Modelo obrigatório:** Gemini Pro — seleccionar manualmente antes de iniciar chat
-6. Iterar com feedback da equipa da oficina até aprovação
+6. **Versão activa do prompt (GEM):** `Gemini/agente-horarios-alfragide-gem.md` — instruções em inglês, outputs em pt-PT; foi o prompt com melhor resultado; STEP 3.4 actualizado para múltiplos meses históricos (sessão 2026-07-12)
+7. **Modelo obrigatório:** Gemini Pro — seleccionar manualmente antes de iniciar chat
+8. Iterar com feedback da equipa da oficina até aprovação
 
 ### Limitação técnica confirmada (sessão 2026-07-04)
 - **Gemini Gem tem limite de ~8.000 caracteres** no campo Instructions
