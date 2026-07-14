@@ -79,7 +79,7 @@ GEM de gestão de horários para a Oficina do Centro de Alfragide. Mais complexo
 
 **Ficheiros do prompt na pasta Gemini:**
 - `Gemini\agente-horarios-alfragide-gem.md` — v4.0 compacto (Gemini Pro Optimized; ~167 linhas; STEP 3.4 para mês anterior simples)
-- `Gemini\agente-horarios-alfragide-80p.md` — **melhor resultado** (instruções em inglês; STEP 3.4 com carryover source + pattern reference para histórico multi-mês; usa `=== Códigos ===` como fonte de turnos e horários)
+- `Gemini\agente-horarios-alfragide-80p.md` — **melhor resultado** (instruções em inglês; STEP 3.4 com carryover source + pattern reference para histórico multi-mês; usa `=== Códigos ===` como fonte de turnos e horários; STEP 3.7B-POST verifica quota de 2 folgas/semana com BLOQUEIO se total ≠ 2)
 
 **Versões de referência (pasta python-gem):**
 - `python-gem\agente-horarios-alfragide.md` — v2 Python (algoritmo estruturado, não usar — GEMs não executam Python)
@@ -348,6 +348,11 @@ C:\Users\Utilizador\.claude\skills\gem-builder\SKILL.md
 | 43 | J2 — STEP 3.3: Por defeito, colaboradores sem restrição de código podem usar qualquer código das famílias A, B ou C de `=== Horários ===`. Elimina limitação ao trio A03/B01/B09. |
 | 44 | J3 — STEP 3.3: Regras individuais conhecidas declaradas explicitamente: Patrício Ribeiro (FOD-FIXED Sáb+Dom todos os fins de semana, só A09); Diogo Ramos (FOD-FIXED Sáb+Dom, só A33); Mychaell (FOD-FIXED Dom+Seg, só A15); Wudson (só A15); Miguel Azevedo (só B01/B09); Hugo Martins e João Borga (só B01, suplência mútua). |
 | 45 | J4 — STEP 4 / PART 5: seleção de códigos actualizada — usa `=== Horários ===` como fonte; A-family = abertura; B/C-family = fecho/intermédio; mix obrigatório por dia. |
+
+### Adições v4.1 (sessão 2026-07-14)
+| # | Alteração |
+|---|---|
+| 46 | K1 — STEP 3.7B-POST: verificação obrigatória pós-colocação de folgas — conta FOD+FOD-WEEKEND+FOD-FIXED+COD+AJD+BMD+FECHO por semana por colaborador; total > 2 = BLOQUEIO imediato (remove FOD rotativo em excesso); causa mais comum explicitada: FOD rotativo colocado na mesma semana que FOD-WEEKEND. Resolve o bug de 4 folgas/semana. |
 
 **Nota sobre Patrício Ribeiro (sessão 2026-07-04):** A regra "folga todos os domingos" no ficheiro Excel estava a ser interpretada literalmente. A prática real (confirmada pelo responsável) é: **FOD-FIXED todos os Sáb+Dom** (trabalha segunda a sexta exclusivamente). O horário de Maio feito pelo humano continha violações desta regra (A18 ao domingo) que foram aceites na prática — o GEM deve seguir a versão corrigida: FOD-FIXED Sáb+Dom, só A09.
 
